@@ -22,7 +22,8 @@ public:
     horsepower = HP;
     torque = to;
     };
-
+    std::string getID();
+    std::string getMake();
 private:
     int length;
     int width;
