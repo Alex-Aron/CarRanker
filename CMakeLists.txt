@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 project(Project3CarPicker)
-
 set(CMAKE_CXX_STANDARD 17)
-
+find_package(SFML 2.6 COMPONENTS system window graphics audio REQUIRED)
 add_executable(Project3CarPicker main.cpp cars.cpp cars.h AdList.cpp AdList.h weather.cpp weather.h)
+target_link_libraries(Project3CarPicker PRIVATE sfml-graphics sfml-audio sfml-system sfml-window)
