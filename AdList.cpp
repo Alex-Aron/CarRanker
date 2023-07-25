@@ -1,8 +1,15 @@
 #include "AdList.h"
 
-void AdList::insertEdge(cars from, cars to) {
-    graph[from.getID()].push_back(to);//Insert edge with vertices on graph
-    if(graph.find(to.getID()) == graph.end()) {
-        graph[to.getID()] = {};
+void AdList::insertCarEdge(cars from, cars to) {
+    carGraph[from.getID()].push_back(to);//Insert edge with vertices on graph
+    if(carGraph.find(to.getID()) == carGraph.end()) {
+        carGraph[to.getID()] = {};
+    }
+}
+
+void AdList::insertWeatherEdge(weather from, weather to) {
+    weatherGraph[from.getCode()].push_back(to);//Insert edge with vertices on graph
+    if(weatherGraph.find(to.getCode()) == weatherGraph.end()) {
+        weatherGraph[to.getCode()] = {};
     }
 }

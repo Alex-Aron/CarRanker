@@ -17,3 +17,13 @@ weather::weather(float p, std::string fDate, int m, int w, int yr, std::string c
     windDirection = windDir;
     windSpeed = windS;
 }
+
+std::string weather::getLocation() {
+    return location;
+}
+
+std::string weather::getCode() {
+    return code;
+}
+
+

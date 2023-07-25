@@ -21,7 +21,8 @@ std::vector<std::string> splitString(const std::string& line, char delim) {
 }
 
 int main() {
-    AdList adList;
+    AdList carAdList;//Might switch to matrix
+    AdList weatherAdList;
     std::ifstream carFile("cars.csv");
     if (!carFile.is_open()) {
         std::cerr << "Error opening the file." << std::endl;
@@ -62,14 +63,20 @@ int main() {
     for(int i = 0; i < carData.size(); i++){
         for(int j = i + 1; j < carData.size(); j++){
             if(carData[i].getMake() == carData[j].getMake()){
-                adList.insertEdge(carData[i], carData[j]);
+                carAdList.insertCarEdge(carData[i], carData[j]);
+            }
+        }
+    }
+    for(int i = 0; i < weatherData.size(); i++){
+        for(int j = i + 1; j < weatherData.size(); j++){
+            if(weatherData[i].getLocation() == weatherData[j].getLocation()){
+                weatherAdList.insertWeatherEdge(weatherData[i], weatherData[j]);
             }
         }
     }
     // Define the window dimensions
     const int windowWidth = 540;
     const int windowHeight = 930;
-
     // Create the SFML window
     sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "SFML Portrait Window");
 
@@ -111,11 +118,9 @@ int main() {
         // Draw the button
         window.draw(button);
         window.draw(buttonText);
-
         // Display the content
         window.display();
     }
-
     carFile.close();
     weatherFile.close();
     return 0;

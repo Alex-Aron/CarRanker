@@ -3,6 +3,8 @@
 class weather {
 public:
     weather(float p, std::string fDate, int m, int w, int yr, std::string c, std::string cde, std::string loc, std::string st, int aTemp, int max, int min, int windDir, float windS);
+    std::string getLocation();
+    std::string getCode();
 private:
     float precipitation;
     std::string fullDate;
