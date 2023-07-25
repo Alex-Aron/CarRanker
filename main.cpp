@@ -107,8 +107,7 @@ int main() {
         }
 
         // Clear the window
-        window.clear(sf::Color::White);
-
+        window.clear(sf::Color::Black);
         // Draw the button
         window.draw(button);
         window.draw(buttonText);
