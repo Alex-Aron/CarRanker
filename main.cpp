@@ -8,7 +8,7 @@
 #include "cars.h"
 #include "AdList.h"
 #include "weather.h"
-void sfmlHandling(std::string& userState, std::string& makeBoxText);
+void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string& cylinderCount);
 // Function to split a string based on a delim (comma in this case)
 std::vector<std::string> splitString(const std::string& line, char delim) {
     std::vector<std::string> tokens;
@@ -23,6 +23,7 @@ std::vector<std::string> splitString(const std::string& line, char delim) {
 int main() {
     std::string userState;
     std::string makeBoxText;
+    std::string cylinderCount;
     AdList carAdList;//Might switch to matrix
     AdList weatherAdList;
     std::ifstream carFile("cars.csv");
@@ -30,7 +31,7 @@ int main() {
         std::cerr << "Error opening the file." << std::endl;
         return 1;
     }
-    sfmlHandling(userState, makeBoxText);
+    sfmlHandling(userState, makeBoxText, cylinderCount);
     std::vector<cars> carData;
     std::vector<weather> weatherData;
     std::string line;
@@ -81,7 +82,7 @@ int main() {
     return 0;
 }
 
-void sfmlHandling(std::string& userState, std::string& makeBoxText){
+void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string& cylinderCount){
     const int windowWidth = 540;
     const int windowHeight = 930;
     // Create the SFML window
@@ -91,12 +92,15 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText){
     const int buttonX = (windowWidth - buttonWidth) / 2; // Center the button horizontally
     const int buttonY = (windowHeight * 2) / 2.5; // Position the button about 1/3 from the bottom
     bool showMakeBox = false;
+    bool showCylinderBox = false;
     // Create the button shape and text
     sf::RectangleShape carButton(sf::Vector2f(buttonWidth, buttonHeight));
     sf::RectangleShape underLine(sf::Vector2f(windowWidth, 1));
     sf::RectangleShape stateInput(sf::Vector2f(300, 30));
-    sf::RectangleShape makeBox(sf::Vector2f(200, 20));
+    sf::RectangleShape makeBox(sf::Vector2f(150, 20));
+    sf::RectangleShape cylinderBox(sf::Vector2f(200, 20));
     makeBox.setFillColor(sf::Color::Black);
+    cylinderBox.setFillColor(sf::Color::Black);
     sf::CircleShape option1;
     sf::CircleShape option2;
     sf::CircleShape option3;
@@ -142,12 +146,14 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText){
     sf::Text option2Text("Car Make (Example: Cheverolet)", font, 25);
     sf::Text option2SubText("Enter Make: ", font, 18);
     sf::Text option3Text("Engine Type (Example: 6 Cylinder)" , font, 24);
+    sf::Text option3SubText("Number of Cylinders:", font, 14);
     sf::Text option4Text("Gas Mileage(City Priority)", font, 28);
     sf::Text option5Text("Gas Mileage(Highway Priority)", font, 28);
     sf::Text option6Text("Automatic Engine(Blank for Manual)", font, 20);
     sf::Text locationPrompt("What State Do You Live In?", font, 28);
     sf::Text userInput("", font, 28);
     sf::Text makeInput("", font, 18);
+    sf::Text cylinderInput("", font, 18);
     option1Text.setPosition(130, 170);
     option2Text.setPosition(130, 250);
     option3Text.setPosition(130, 330);
@@ -164,6 +170,8 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText){
     //titleText.setFillColor(sf::Color::White);
     userInput.setFillColor(sf::Color::Black);
     makeInput.setFillColor(sf::Color::Black);
+    cylinderInput.setFillColor(sf::Color::Black);
+    option3SubText.setFillColor(sf::Color::White);
     // Main loop
     while (window.isOpen()) {
         sf::Event event;
@@ -184,23 +192,33 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText){
                     if (option1.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         selectedOption.setPosition(82, 172);
                         showMakeBox = false;
+                        showCylinderBox = false;
                     } else if (option2.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         selectedOption.setPosition(82, 252);
                         makeBox.setFillColor(sf::Color::White);
-                        makeBox.setPosition(200, 282);
-                        option2SubText.setPosition(100, 282);
-                        makeInput.setPosition(210, 282);
+                        makeBox.setPosition(230, 282);
+                        option2SubText.setPosition(130, 282);
+                        makeInput.setPosition(240, 282);
                         makeInput.setFillColor(sf::Color::Black);
                         showMakeBox = true;
+                        showCylinderBox = false;
                     } else if (option3.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         selectedOption.setPosition(82, 332);
+                        cylinderBox.setFillColor(sf::Color::White);
+                        cylinderBox.setPosition(265, 364);
+                        option3SubText.setPosition(130, 362);
+                        cylinderInput.setPosition(270, 362);
+                        cylinderInput.setFillColor(sf::Color::Black);
                         showMakeBox = false;
+                        showCylinderBox = true;
                     } else if (option4.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         selectedOption.setPosition(82, 412);
                         showMakeBox = false;
+                        showCylinderBox = false;
                     } else if (option5.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         selectedOption.setPosition(82, 492);
                         showMakeBox = false;
+                        showCylinderBox = false;
                     }
                     if (carButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         std::cout << "Implement action Later" << std::endl;
@@ -209,7 +227,6 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText){
             }
         if (event.type == sf::Event::TextEntered) {
             sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-            bool typedOnce = false;
             if (stateInput.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                 if (event.text.unicode <
                     128) {//Ensure it is only the unicode alphabet characters that would be in a state
@@ -245,6 +262,25 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText){
                     }
                 }
             }
+            else if (cylinderBox.getGlobalBounds().contains(mousePos.x, mousePos.y) && showCylinderBox) {
+                if (event.type == sf::Event::TextEntered && showCylinderBox) {
+                    if (event.text.unicode <
+                        128) {//Ensure it is only the unicode alphabet characters that would be in a state
+                        if (event.text.unicode == 13) { // Handle Enter key press (optional)
+                            std::cout << cylinderCount << std::endl;
+                            //Use if want to clear input userState.clear();
+                        } else if (event.text.unicode == 8 &&
+                                   !cylinderCount.empty()) {//Backspace is unicode 8, so if that is pressed get rid of the last character.
+                            cylinderCount.pop_back();
+                        } else if (userState.size() <
+                                   20) {//Longest state name is Massachusetts, which is 13 characters, so it shouldn't even be longer than that
+                            cylinderCount += static_cast<char>(event.text.unicode);
+                        }
+                        //Make sure the textBox shows the charcters being typed in
+                        cylinderInput.setString(cylinderCount);
+                    }
+                }
+            }
         }
         }
             // Clear the window
@@ -276,6 +312,11 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText){
                 window.draw(makeBox);
                 window.draw(option2SubText);
                 window.draw(makeInput);
+            }
+            if (showCylinderBox) {
+            window.draw(cylinderBox);
+            window.draw(option3SubText);
+            window.draw(cylinderInput);
             }
             window.display();
         }
