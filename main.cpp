@@ -1,18 +1,18 @@
-//Project 3b: CarRanker
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <chrono>
 #include <SFML/Graphics.hpp>
 #include "cars.h"
-#include "AdList.h"
 #include "weather.h"
-void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string& cylinderCount, std::string& optionChosen, bool& findCarClicked, std::string& make);
-void resultWindow(sf::Font font);
-void findCars(std::string& dfsCar, std::string& bfsCar, std::string& dfsTime, std::string& dfsProperties, std::string& bfsTime, std::string& bfsProperties, make);
-void readData(AdList& carAdList, AdList& weatherAdList);
+#include "OptionsButton.h"
+//Function definitions
+void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string& cylinderCount, bool& horsepower, bool& gasCity, bool& gasHighway, bool& findCarClicked);
+void resultWindow(std::vector<cars>& mergeResults, std::string mergeTimeTaken,std::vector<cars>& quickResults, std::string quickTimeTaken);
+std::vector<std::string> splitString(const std::string& line, char delim);
 // Function to split a string based on a delim (comma in this case)
 std::vector<std::string> splitString(const std::string& line, char delim) {
     std::vector<std::string> tokens;
@@ -24,90 +24,406 @@ std::vector<std::string> splitString(const std::string& line, char delim) {
     return tokens;
 }
 
-int main() {
-    std::string userState;
-    std::string makeBoxText;
-    std::string cylinderCount;
-    std::string optionChosen;
-    std::string make;
-    bool findCarClicked = false;
-    sf::Font font;
-    font.loadFromFile("arial.ttf");
-    AdList carAdList;
-    AdList weatherAdList;
-    sfmlHandling(userState, makeBoxText, cylinderCount, optionChosen, findCarClicked, make);
-    if(!findCarClicked)
-        return 0;
-    readData(carAdList, weatherAdList);
-    findCars(carAdList, weatherAdList, userState, optionChosen, cylinderCount, make);
-    resultWindow(font);
-    return 0;
+void sortMake(std::vector<cars>& carData, std::vector<cars>& ans, std::string make) {
+    for (int i = 0; i < carData.size(); i++) {
+        if (carData[i].getMake() == make) {
+            ans.push_back(carData[i]);//Data in csv already sorted by make
+        }
+    }
 }
 
-void readData(AdList& carAdList, AdList& weatherAdList){
+void mergeHP(std::vector<cars>& carData, int start, int mid, int end) {
+    int len1 = mid - start + 1;
+    int len2 = end - mid;
+    std::vector<cars> vect1;
+    std::vector<cars> vect2;
+    for (int i = 0; i < len1; i++) {
+        vect1.push_back(carData[start + i]);
+    }
+    for(int i = 0; i < len2; i++) {
+        vect2.push_back(carData[mid + 1 + i]);
+    }
+    int i = 0;
+    int j = 0;
+    int k = start;
+    while (i < len1 && j < len2) {
+        if (vect1[i].getHorsepower() <= vect2[j].getHorsepower()) {
+            carData[k] = vect1[i];
+            i++;
+        }
+        else {
+            carData[k] = vect2[j];
+            j++;
+        }
+        k++;
+    }
+    while (i < len1) {
+        carData[k] = vect1[i];
+        i++;
+        k++;
+    }
+    while (j < len2) {
+        carData[k] = vect2[j];
+        j++;
+        k++;
+    }
+}
+
+void mergeSortHP(std::vector<cars>& carData, int start, int end) {
+    if (start == end) {
+        return;
+    }
+    int mid = (start + end) / 2;
+    mergeSortHP(carData, start, mid);
+    mergeSortHP(carData, mid + 1, end);
+    mergeHP(carData, start, mid, end);
+}
+
+void mergeSortHorsepower(std::vector<cars>& carData, std::vector<cars>& ans) {
+    mergeSortHP(carData, 0, carData.size() - 1);
+    for (int i = carData.size() - 1; i > carData.size() - 1001; i--) {
+        ans.push_back(carData[i]);
+    }
+}
+
+
+int qPartitionHP(std::vector<cars>& carData, int low, int high) {
+    int pivot = carData[high].getHorsepower();
+    int up = low;
+    int down = high - 1;
+    while (up <= down) {
+        while (up <= down && carData[up].getHorsepower() <= pivot) {
+            up++;
+        }
+        while (down >= up && carData[down].getHorsepower() >= pivot) {
+            down--;
+        }
+        if (up < down) {
+            cars temp = carData[up];
+            carData[up] = carData[down];
+            carData[down] = temp;
+        }
+    }
+    cars temp = carData[up];
+    carData[up] = carData[high];
+    carData[high] = temp;
+    return up;
+}
+void quickSortHP(std::vector<cars>& carData, int low, int high) {
+    if (low < high) {
+        int pivot = qPartitionHP(carData, low, high);
+        quickSortHP(carData, low, pivot - 1);
+        quickSortHP(carData, pivot + 1, high);
+    }
+    return;
+}
+
+void quickSortHorsepower(std::vector<cars>& carData, std::vector<cars>& ans) {
+    quickSortHP(carData, 0, carData.size() - 1);
+    for (int i = carData.size() - 1; i > carData.size() - 1001; i--) {
+        ans.push_back(carData[i]);
+    }
+}
+
+int qPartitionC(std::vector<cars>& carData, int low, int high) {
+    int pivot = carData[high].getCityMPG();
+    int up = low;
+    int down = high - 1;
+    while (up <= down) {
+        while (up <= down && carData[up].getCityMPG() <= pivot) {
+            up++;
+        }
+        while (down >= up && carData[down].getCityMPG() >= pivot) {
+            down--;
+        }
+        if (up < down) {
+            cars temp = carData[up];
+            carData[up] = carData[down];
+            carData[down] = temp;
+        }
+    }
+    cars temp = carData[up];
+    carData[up] = carData[high];
+    carData[high] = temp;
+    return up;
+}
+
+void quickSortC(std::vector<cars>& carData, int low, int high) {
+    if (low < high) {
+        int pivot = qPartitionC(carData, low, high);
+        quickSortC(carData, low, pivot - 1);
+        quickSortC(carData, pivot + 1, high);
+    }
+    return;
+}
+
+void quickSortGasCity(std::vector<cars>& carData, std::vector<cars>& ans) {
+    quickSortC(carData, 0, carData.size()-1);
+    for (int i = carData.size() - 1; i > carData.size() - 1001; i--) {
+        ans.push_back(carData[i]);
+    }
+    return;
+}
+
+
+void mergeC(std::vector<cars>& carData, int start, int mid, int end) {
+    int len1 = mid - start + 1;
+    int len2 = end - mid;
+    std::vector<cars> vect1;
+    std::vector<cars> vect2;
+    for (int i = 0; i < len1; i++) {
+        vect1.push_back(carData[start + i]);
+    }
+    for(int i = 0; i < len2; i++) {
+        vect2.push_back(carData[mid + 1 + i]);
+    }
+    int i = 0;
+    int j = 0;
+    int k = start;
+    while (i < len1 && j < len2) {
+        if (vect1[i].getCityMPG() <= vect2[j].getCityMPG()) {
+            carData[k] = vect1[i];
+            i++;
+        }
+        else {
+            carData[k] = vect2[j];
+            j++;
+        }
+        k++;
+    }
+    while (i < len1) {
+        carData[k] = vect1[i];
+        i++;
+        k++;
+    }
+    while (j < len2) {
+        carData[k] = vect2[j];
+        j++;
+        k++;
+    }
+}
+
+void mergeSortC(std::vector<cars>& carData, int start, int end) {
+    if (start == end) {
+        return;
+    }
+    int mid = (start + end) / 2;
+    mergeSortC(carData, start, mid);
+    mergeSortC(carData, mid + 1, end);
+    mergeC(carData, start, mid, end);
+}
+
+void mergeSortGasCity(std::vector<cars>& carData, std::vector<cars>& ans) {
+    mergeSortC(carData, 0, carData.size()-1);
+    for (int i = carData.size() - 1; i > carData.size() - 1001; i--) {
+        ans.push_back(carData[i]);
+    }
+    return;
+}
+int qPartitionH(std::vector<cars>& carData, int low, int high) {
+    int pivot = carData[high].getHighwayMPG();
+    int up = low;
+    int down = high - 1;
+    while (up <= down) {
+        while (up <= down && carData[up].getHighwayMPG() <= pivot) {
+            up++;
+        }
+        while (down >= up && carData[down].getHighwayMPG() >= pivot) {
+            down--;
+        }
+        if (up < down) {
+            cars temp = carData[up];
+            carData[up] = carData[down];
+            carData[down] = temp;
+        }
+    }
+    cars temp = carData[up];
+    carData[up] = carData[high];
+    carData[high] = temp;
+    return up;
+}
+
+void quickSortH(std::vector<cars>& carData, int low, int high) {
+    if (low < high) {
+        int pivot = qPartitionH(carData, low, high);
+        quickSortH(carData, low, pivot - 1);
+        quickSortH(carData, pivot + 1, high);
+    }
+    return;
+}
+
+void quickSortGasHighway(std::vector<cars>& carData, std::vector<cars>& ans) {
+    quickSortH(carData, 0, carData.size() - 1);
+    for (int i = carData.size() - 1; i > carData.size() - 1001; i--) {
+        ans.push_back(carData[i]);
+    }
+    return;
+}
+
+void mergeHW(std::vector<cars>& carData, int start, int mid, int end) {
+    int len1 = mid - start + 1;
+    int len2 = end - mid;
+    std::vector<cars> vect1;
+    std::vector<cars> vect2;
+    for (int i = 0; i < len1; i++) {
+        vect1.push_back(carData[start + i]);
+    }
+    for(int i = 0; i < len2; i++) {
+        vect2.push_back(carData[mid + 1 + i]);
+    }
+    int i = 0;
+    int j = 0;
+    int k = start;
+    while (i < len1 && j < len2) {
+        if (vect1[i].getHighwayMPG() <= vect2[j].getHighwayMPG()) {
+            carData[k] = vect1[i];
+            i++;
+        }
+        else {
+            carData[k] = vect2[j];
+            j++;
+        }
+        k++;
+    }
+    while (i < len1) {
+        carData[k] = vect1[i];
+        i++;
+        k++;
+    }
+    while (j < len2) {
+        carData[k] = vect2[j];
+        j++;
+        k++;
+    }
+}
+
+void mergeSortHW(std::vector<cars>& carData, int start, int end) {
+    if (start == end) {
+        return;
+    }
+    int mid = (start + end) / 2;
+    mergeSortHW(carData, start, mid);
+    mergeSortHW(carData, mid + 1, end);
+    mergeHW(carData, start, mid, end);
+}
+
+void mergeSortGasHighway(std::vector<cars>& carData, std::vector<cars>& ans) {
+    mergeSortHW(carData, 0, carData.size()-1);
+    for (int i = carData.size() - 1; i > carData.size() - 1001; i--) {
+        ans.push_back(carData[i]);
+    }
+    return;
+}
+
+
+int main() {
+    bool horsepower = false;
+    bool gasCity = false;
+    bool gasHighway = false;
+    bool findCarClicked = false;
+    std::string userState = "";
+    std::string makeBoxText = "";
+    std::string cylinderCount = "";
     std::ifstream carFile("cars.csv");
     if (!carFile.is_open()) {
         std::cerr << "Error opening the file." << std::endl;
+        return 1;
     }
+    //sfmlHandling(userState, makeBoxText, cylinderCount);
     std::vector<cars> carData;
     std::vector<weather> weatherData;
     std::string line;
     std::getline(carFile, line);
     while (std::getline(carFile, line)) {
         std::vector<std::string> row = splitString(line, ',');
-        for(auto & str : row){
+        for (auto& str : row) {
             str.erase(std::remove(str.begin(), str.end(), '\"'), str.end());
         }
         cars car(std::stoi(row[0]), std::stoi(row[1]), std::stoi(row[2]), row[3], row[4],
-                 true, std::stoi(row[6]), row[7], std::stoi(row[8]), row[9],
-                 std::stoi(row[10]), true, row[12], row[13], row[14], std::stoi(row[15]),
-                 std::stoi(row[16]), std::stoi(row[17]));
+            true, std::stoi(row[6]), row[7], std::stoi(row[8]), row[9],
+            std::stoi(row[10]), true, row[12], row[13], row[14], std::stoi(row[15]),
+            std::stoi(row[16]), std::stoi(row[17]));
         carData.push_back(car);
     }
     std::ifstream weatherFile("weather.csv");
     if (!carFile.is_open()) {
         std::cerr << "Error opening the file." << std::endl;
+        return 1;
     }
     std::getline(weatherFile, line);
     while (std::getline(weatherFile, line)) {
         std::vector<std::string> row = splitString(line, ',');
-        for(auto & str : row){
+        for (auto& str : row) {
             str.erase(std::remove(str.begin(), str.end(), '\"'), str.end());
         }
-        weather weatherCity(std::stof(row[0]), row[1], std::stoi(row[2]), std::stoi(row[3]), std::stoi(row[4]),row[5], row[6], row[7], row[9], std::stoi(row[10]), std::stoi(row[11]), std::stoi(row[12]), std::stoi(row[13]), std::stof(row[14]));
+        weather weatherCity(std::stof(row[0]), row[1], std::stoi(row[2]), std::stoi(row[3]), std::stoi(row[4]), row[5], row[6], row[7], row[9], std::stoi(row[10]), std::stoi(row[11]), std::stoi(row[12]), std::stoi(row[13]), std::stof(row[14]));
         weatherData.push_back(weatherCity);
     }
 
-    for(int i = 0; i < carData.size(); i++){
-        for(int j = i + 1; j < carData.size(); j++){
-            if(carData[i].getMake() == carData[j].getMake()){
-                carAdList.insertCarEdge(carData[i], carData[j]);
-            }
-        }
+    sfmlHandling(userState, makeBoxText, cylinderCount, horsepower, gasCity, gasHighway, findCarClicked);
+    std::vector<cars> mergeResults;
+    std::vector<cars> quickResults;
+    auto startTimeMerge = std::chrono::high_resolution_clock::now();
+    if (makeBoxText != "") {
+        sortMake(carData, mergeResults, makeBoxText);
     }
-    for(int i = 0; i < weatherData.size(); i++){
-        for(int j = i + 1; j < weatherData.size(); j++){
-            if(weatherData[i].getState() == weatherData[j].getState()){
-                weatherAdList.insertWeatherEdge(weatherData[i], weatherData[j]);
-            }
-        }
+    if (horsepower) {
+        mergeSortHorsepower(carData, mergeResults);
+    }
+
+    if (gasCity) {
+        mergeSortGasCity(carData, mergeResults);
+    }
+
+    if (gasHighway) {
+        mergeSortGasHighway(carData, mergeResults);
+    }
+    auto endTimeMerge = std::chrono::high_resolution_clock::now();
+    auto durationMerge = std::chrono::duration_cast<std::chrono::microseconds>(endTimeMerge - startTimeMerge).count();
+    std::string mergeTimeTaken = std::to_string(durationMerge);
+    auto startTimeQuick = std::chrono::high_resolution_clock::now();
+    if (makeBoxText != "") {
+        sortMake(carData, quickResults, makeBoxText);
+    }
+    if (horsepower) {
+        quickSortHorsepower(carData, quickResults);
+    }
+
+    if (gasCity) {
+        quickSortGasCity(carData, quickResults);
+    }
+    if (gasHighway) {
+        quickSortGasHighway(carData, quickResults);
+    }
+    auto endTimeQuick = std::chrono::high_resolution_clock::now();
+    auto durationQuick = std::chrono::duration_cast<std::chrono::microseconds>(endTimeQuick - startTimeQuick).count();
+    std::string quickTimeTaken = std::to_string(durationQuick);
+    if(findCarClicked){
+        resultWindow(mergeResults, mergeTimeTaken, quickResults, quickTimeTaken);
+    }
+
+    std::cout << "Here is your list of cars other than the top two: " << std::endl;
+    std::cout << mergeResults.size() << std::endl;
+    for (int i = 0; i < mergeResults.size(); i++) {
+        mergeResults[i].printCar();
     }
     carFile.close();
     weatherFile.close();
+    return 0;
 }
 
-void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string& cylinderCount, std::string& optionChosen, bool& findCarClicked){
+void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string& cylinderCount, bool& horsepower, bool& gasCity, bool&
+gasHighway, bool& findCarClicked) {
     const int windowWidth = 540;
     const int windowHeight = 930;
     // Create the SFML window
-    sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "SFML Portrait Window");
+    sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "Car Selection Helper");
     const int buttonWidth = 250;
     const int buttonHeight = 100;
     const int buttonX = (windowWidth - buttonWidth) / 2; // Center the button horizontally
     const int buttonY = (windowHeight * 2) / 2.5; // Position the button about 1/3 from the bottom
     bool showMakeBox = false;
     bool showCylinderBox = false;
-    bool automatic = false;
     // Create the button shape and text
     sf::RectangleShape carButton(sf::Vector2f(buttonWidth, buttonHeight));
     sf::RectangleShape underLine(sf::Vector2f(windowWidth, 1));
@@ -116,37 +432,13 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string&
     sf::RectangleShape cylinderBox(sf::Vector2f(200, 20));
     makeBox.setFillColor(sf::Color::Black);
     cylinderBox.setFillColor(sf::Color::Black);
-    sf::CircleShape option1;
-    sf::CircleShape option2;
-    sf::CircleShape option3;
-    sf::CircleShape option4;
-    sf::CircleShape option5;
-    sf::CircleShape option6;
-    sf::CircleShape selectedOption;
-    sf::CircleShape automaticSelected;
-    selectedOption.setFillColor(sf::Color::Black);
-    automaticSelected.setFillColor(sf::Color::White);
-    selectedOption.setRadius(16);
-    automaticSelected.setRadius(16);
-    option1.setRadius(18);
-    option2.setRadius(18);
-    option3.setRadius(18);
-    option4.setRadius(18);
-    option5.setRadius(18);
-    option6.setRadius(18);
-    option1.setPosition(80,170);
-    option2.setPosition(80,250);
-    option3.setPosition(80,330);
-    option4.setPosition(80,410);
-    option5.setPosition(80,490);
-    option6.setPosition(80, 570);
-    automaticSelected.setPosition(82, 572);
-    option1.setFillColor(sf::Color::White);
-    option2.setFillColor(sf::Color::White);
-    option3.setFillColor(sf::Color::White);
-    option4.setFillColor(sf::Color::White);
-    option5.setFillColor(sf::Color::White);
-    stateInput.setPosition(120,670);
+    OptionsButton option1(80, 170);
+    OptionsButton option2(80, 250);
+    OptionsButton option3(80, 330);
+    OptionsButton option4(80, 410);
+    OptionsButton option5(80, 490);
+    OptionsButton option6(80, 570);
+    stateInput.setPosition(120, 670);
     carButton.setPosition(buttonX, buttonY);
     underLine.setPosition(0, 90);
     carButton.setFillColor(sf::Color::Blue);
@@ -160,7 +452,7 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string&
     sf::Text option1Text("Horsepower (HP)", font, 28);
     sf::Text option2Text("Car Make (Example: Cheverolet)", font, 25);
     sf::Text option2SubText("Enter Make: ", font, 18);
-    sf::Text option3Text("Engine Type (Example: 6 Cylinder)" , font, 24);
+    sf::Text option3Text("Engine Type (Example: 6 Cylinder)", font, 24);
     sf::Text option3SubText("Number of Cylinders:", font, 14);
     sf::Text option4Text("Gas Mileage(City Priority)", font, 28);
     sf::Text option5Text("Gas Mileage(Highway Priority)", font, 28);
@@ -180,11 +472,14 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string&
     locationPrompt.setPosition(100, 630);
     titleText.setPosition(120, 50);
     buttonText.setPosition(buttonX + (buttonWidth - buttonText.getLocalBounds().width) / 2,
-                           buttonY + (buttonHeight - buttonText.getLocalBounds().height) / 2);
+        buttonY + (buttonHeight - buttonText.getLocalBounds().height) / 2);
+    //buttonText.setFillColor(sf::Color::White);
+    //titleText.setFillColor(sf::Color::White);
     userInput.setFillColor(sf::Color::Black);
     makeInput.setFillColor(sf::Color::Black);
     cylinderInput.setFillColor(sf::Color::Black);
     option3SubText.setFillColor(sf::Color::White);
+    // Main loop
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -194,50 +489,48 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string&
             if (event.type == sf::Event::MouseButtonReleased) {
                 if (event.mouseButton.button == sf::Mouse::Left) {
                     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-                    if (option6.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
-                        if (automaticSelected.getFillColor() == sf::Color::Black) {
-                            automaticSelected.setFillColor(sf::Color::White);
-                            automatic = false;
-                        } else {
-                            automaticSelected.setFillColor(sf::Color::Black);
-                            automatic = true;
+                    if (option1.myOption().getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                        option1.select();
+                        horsepower = !horsepower;
+                    }
+                    if (option2.myOption().getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                        option2.select();
+                        if (option2.isSelected()) {
+                            makeBox.setFillColor(sf::Color::White);
+                            makeBox.setPosition(230, 282);
+                            option2SubText.setPosition(130, 282);
+                            makeInput.setPosition(240, 282);
+                            makeInput.setFillColor(sf::Color::Black);
+                            showMakeBox = true;
+                        }
+                        else {
+                            showMakeBox = false;
                         }
                     }
-                    if (option1.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
-                        selectedOption.setPosition(82, 172);
-                        optionChosen = "horsepower";
-                        showMakeBox = false;
-                        showCylinderBox = false;
-                    } else if (option2.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
-                        optionChosen = "make";
-                        selectedOption.setPosition(82, 252);
-                        makeBox.setFillColor(sf::Color::White);
-                        makeBox.setPosition(230, 282);
-                        option2SubText.setPosition(130, 282);
-                        makeInput.setPosition(240, 282);
-                        makeInput.setFillColor(sf::Color::Black);
-                        showMakeBox = true;
-                        showCylinderBox = false;
-                    } else if (option3.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
-                        optionChosen = "numCylinders";
-                        selectedOption.setPosition(82, 332);
-                        cylinderBox.setFillColor(sf::Color::White);
-                        cylinderBox.setPosition(265, 364);
-                        option3SubText.setPosition(130, 362);
-                        cylinderInput.setPosition(270, 362);
-                        cylinderInput.setFillColor(sf::Color::Black);
-                        showMakeBox = false;
-                        showCylinderBox = true;
-                    } else if (option4.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
-                        optionChosen = "cityMileage";
-                        selectedOption.setPosition(82, 412);
-                        showMakeBox = false;
-                        showCylinderBox = false;
-                    } else if (option5.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
-                        optionChosen = "highwayMileage";
-                        selectedOption.setPosition(82, 492);
-                        showMakeBox = false;
-                        showCylinderBox = false;
+                    if (option3.myOption().getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                        option3.select();
+                        if (option3.isSelected()) {
+                            cylinderBox.setFillColor(sf::Color::White);
+                            cylinderBox.setPosition(265, 364);
+                            option3SubText.setPosition(130, 362);
+                            cylinderInput.setPosition(270, 362);
+                            cylinderInput.setFillColor(sf::Color::Black);
+                            showCylinderBox = true;
+                        }
+                        else {
+                            showCylinderBox = false;
+                        }
+                    }
+                    if (option4.myOption().getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                        option4.select();
+                        gasCity = !gasCity;
+                    }
+                    if (option5.myOption().getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                        option5.select();
+                        gasHighway = !gasHighway;
+                    }
+                    if (option6.myOption().getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                        option6.select();
                     }
                     if (carButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         findCarClicked = true;
@@ -245,150 +538,149 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string&
                     }
                 }
             }
-        if (event.type == sf::Event::TextEntered) {
-            sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-            if (stateInput.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
-                if (event.text.unicode <
-                    128) {//Ensure it is only the unicode alphabet characters that would be in a state
-                    if (event.text.unicode == 13) { // Handle Enter key press (optional)
-                        std::cout << "User State: " << userState << std::endl;
-                        //Use if want to clear input userState.clear();
-                    } else if (event.text.unicode == 8 &&
-                               !userState.empty()) {//Backspace is unicode 8, so if that is pressed get rid of the last character.
-                        userState.pop_back();
-                    } else if (userState.size() <
-                               20) {//Longest state name is Massachusetts, which is 13 characters, so it shouldn't even be longer than that
-                        userState += static_cast<char>(event.text.unicode);
-                    }
-                    //Make sure the textBox shows the charcters being typed in
-                    userInput.setString(userState);
-                }
-            } else if (makeBox.getGlobalBounds().contains(mousePos.x, mousePos.y) && showMakeBox) {
-                if (event.type == sf::Event::TextEntered && showMakeBox) {
+            if (event.type == sf::Event::TextEntered) {
+                sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+                if (stateInput.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                     if (event.text.unicode <
                         128) {//Ensure it is only the unicode alphabet characters that would be in a state
                         if (event.text.unicode == 13) { // Handle Enter key press (optional)
-                            std::cout << makeBoxText << std::endl;
+                            std::cout << "User State: " << userState << std::endl;
                             //Use if want to clear input userState.clear();
-                        } else if (event.text.unicode == 8 &&
-                                   !makeBoxText.empty()) {//Backspace is unicode 8, so if that is pressed get rid of the last character.
-                            makeBoxText.pop_back();
-                        } else if (userState.size() <
-                                   20) {//Longest state name is Massachusetts, which is 13 characters, so it shouldn't even be longer than that
-                            makeBoxText += static_cast<char>(event.text.unicode);
+                        }
+                        else if (event.text.unicode == 8 &&
+                            !userState.empty()) {//Backspace is unicode 8, so if that is pressed get rid of the last character.
+                            userState.pop_back();
+                        }
+                        else if (userState.size() <
+                            20) {//Longest state name is Massachusetts, which is 13 characters, so it shouldn't even be longer than that
+                            userState += static_cast<char>(event.text.unicode);
                         }
                         //Make sure the textBox shows the charcters being typed in
-                        makeInput.setString(makeBoxText);
+                        userInput.setString(userState);
                     }
                 }
-            }
-            else if (cylinderBox.getGlobalBounds().contains(mousePos.x, mousePos.y) && showCylinderBox) {
-                if (event.type == sf::Event::TextEntered && showCylinderBox) {
-                    if (event.text.unicode <
-                        128) {//Ensure it is only the unicode alphabet characters that would be in a state
-                        if (event.text.unicode == 13) { // Handle Enter key press (optional)
-                            std::cout << cylinderCount << std::endl;
-                            //Use if want to clear input userState.clear();
-                        } else if (event.text.unicode == 8 &&
-                                   !cylinderCount.empty()) {//Backspace is unicode 8, so if that is pressed get rid of the last character.
-                            cylinderCount.pop_back();
-                        } else if (userState.size() <
-                                   20) {//Longest state name is Massachusetts, which is 13 characters, so it shouldn't even be longer than that
-                            cylinderCount += static_cast<char>(event.text.unicode);
+                else if (makeBox.getGlobalBounds().contains(mousePos.x, mousePos.y) && showMakeBox) {
+                    if (event.type == sf::Event::TextEntered && showMakeBox) {
+                        if (event.text.unicode <
+                            128) {//Ensure it is only the unicode alphabet characters that would be in a state
+                            if (event.text.unicode == 13) { // Handle Enter key press (optional)
+                                std::cout << makeBoxText << std::endl;
+                                //Use if want to clear input userState.clear();
+                            }
+                            else if (event.text.unicode == 8 &&
+                                !makeBoxText.empty()) {//Backspace is unicode 8, so if that is pressed get rid of the last character.
+                                makeBoxText.pop_back();
+                            }
+                            else if (userState.size() <
+                                20) {//Longest state name is Massachusetts, which is 13 characters, so it shouldn't even be longer than that
+                                makeBoxText += static_cast<char>(event.text.unicode);
+                            }
+                            //Make sure the textBox shows the charcters being typed in
+                            makeInput.setString(makeBoxText);
                         }
-                        //Make sure the textBox shows the charcters being typed in
-                        cylinderInput.setString(cylinderCount);
+                    }
+                }
+                else if (cylinderBox.getGlobalBounds().contains(mousePos.x, mousePos.y) && showCylinderBox) {
+                    if (event.type == sf::Event::TextEntered && showCylinderBox) {
+                        if (event.text.unicode <
+                            128) {//Ensure it is only the unicode alphabet characters that would be in a state
+                            if (event.text.unicode == 13) { // Handle Enter key press (optional)
+                                std::cout << cylinderCount << std::endl;
+                                //Use if want to clear input userState.clear();
+                            }
+                            else if (event.text.unicode == 8 &&
+                                !cylinderCount.empty()) {//Backspace is unicode 8, so if that is pressed get rid of the last character.
+                                cylinderCount.pop_back();
+                            }
+                            else if (userState.size() <
+                                20) {//Longest state name is Massachusetts, which is 13 characters, so it shouldn't even be longer than that
+                                cylinderCount += static_cast<char>(event.text.unicode);
+                            }
+                            //Make sure the textBox shows the charcters being typed in
+                            cylinderInput.setString(cylinderCount);
+                        }
                     }
                 }
             }
         }
+        // Clear the window
+        window.clear(sf::Color::Black);
+        // Draw all the sfml objects
+        window.draw(carButton);
+        window.draw(buttonText);
+        window.draw(titleText);
+        window.draw(underLine);
+        window.draw(questionText);
+        window.draw(locationPrompt);
+        window.draw(stateInput);
+        window.draw(userInput);
+        option1.drawButton(window);
+        option2.drawButton(window);
+        option3.drawButton(window);
+        option4.drawButton(window);
+        option5.drawButton(window);
+        option6.drawButton(window);
+        window.draw(option1Text);
+        window.draw(option2Text);
+        window.draw(option3Text);
+        window.draw(option4Text);
+        window.draw(option5Text);
+        window.draw(option6Text);
+        if (showMakeBox) {
+            window.draw(makeBox);
+            window.draw(option2SubText);
+            window.draw(makeInput);
         }
-            // Clear the window
-            window.clear(sf::Color::Black);
-            // Draw all the sfml objects
-            window.draw(carButton);
-            window.draw(buttonText);
-            window.draw(titleText);
-            window.draw(underLine);
-            window.draw(questionText);
-            window.draw(locationPrompt);
-            window.draw(stateInput);
-            window.draw(userInput);
-            window.draw(option1);
-            window.draw(option2);
-            window.draw(option3);
-            window.draw(option4);
-            window.draw(option5);
-            window.draw(option6);
-            window.draw(option1Text);
-            window.draw(option2Text);
-            window.draw(option3Text);
-            window.draw(option4Text);
-            window.draw(option5Text);
-            window.draw(option6Text);
-            window.draw(selectedOption);
-            window.draw(automaticSelected);
-            if (showMakeBox) {
-                window.draw(makeBox);
-                window.draw(option2SubText);
-                window.draw(makeInput);
-            }
-            if (showCylinderBox) {
+        if (showCylinderBox) {
             window.draw(cylinderBox);
             window.draw(option3SubText);
             window.draw(cylinderInput);
-            }
-            window.display();
         }
+        window.display();
     }
-
-    void resultWindow(sf::Font font){
-        sf::RenderWindow secondWindow(sf::VideoMode(400, 600), "SFML SubWindow");
-        //Call two searches right before showing the results on the second screen
-        std::string dfsCar;
-        std::string bfsCar;
-        std::string dfsTime;
-        std::string dfsProperties;
-        std::string bfsTime;
-        std::string bfsProperties;
-        findCars(dfsCar,  bfsCar, dfsTime,  dfsProperties, bfsTime, bfsProperties);
-        while (secondWindow.isOpen()) {
-            sf::Event secondEvent;
-            sf::Text dfs("Result found with Depth-First Search: ", font, 18);
-            sf::Text bfs("Result found with Breadth-First Search: ", font, 18);
-            sf::Text dfsTime("Time taken: ", font, 18);
-            sf::Text bfsTime("Time taken: ", font, 18);
-            sf::Text carProperties1("Car Properites: ", font, 16);
-            sf::Text carProperties2("Car Properites: ", font, 16);
-            dfs.setPosition(0, 10);
-            dfsTime.setPosition(0, 290);
-            bfs.setPosition(0, 310);
-            bfsTime.setPosition(0, 580);
-            carProperties1.setPosition(0, 60);
-            carProperties2.setPosition(0, 360);
-            dfs.setFillColor(sf::Color::White);
-            bfs.setFillColor(sf::Color::White);
-            carProperties1.setFillColor(sf::Color::White);
-            carProperties2.setFillColor(sf::Color::White);
-            dfsTime.setFillColor(sf::Color::White);
-            bfsTime.setFillColor(sf::Color::White);
-            sf::Text dfsCarInfo;
-            sf::Text bfsCarInfo;
-            while (secondWindow.pollEvent(secondEvent)) {
-                if (secondEvent.type == sf::Event::Closed)
-                    secondWindow.close();
-            }
-            secondWindow.clear(sf::Color::Black);
-            secondWindow.draw(dfs);
-            secondWindow.draw(bfs);
-            secondWindow.draw(carProperties1);
-            secondWindow.draw(carProperties2);
-            secondWindow.draw(bfsTime);
-            secondWindow.draw(dfsTime);
-            secondWindow.display();
-        }
 }
 
-void findCars(std::string& dfsCar, std::string& bfsCar, std::string& dfsTime, std::string& dfsProperties, std::string& bfsTime, std::string& bfsProperties){
-
+void resultWindow(std::vector<cars>& mergeResults, std::string mergeTimeTaken,std::vector<cars>& quickResults, std::string quickTimeTaken){
+    sf::RenderWindow secondWindow(sf::VideoMode(450, 800), "SFML SubWindow");
+    sf::Font font;
+    font.loadFromFile("arial.ttf");
+    while (secondWindow.isOpen()) {
+        sf::Event secondEvent;
+        std::string mergeCarText = mergeResults[0].carText();
+        sf::Text mergeCarFound("Mergesort result found:\n" + mergeCarText, font, 14);
+        mergeCarFound.setPosition(0, 10);
+        sf::Text timeMT("Time Taken for Mergesort: " + mergeTimeTaken + " microseconds", font, 18);
+        timeMT.setPosition(0, 315);
+        while (secondWindow.pollEvent(secondEvent)) {
+            if (secondEvent.type == sf::Event::Closed)
+                secondWindow.close();
+        }
+        std::string quickCarText = quickResults[0].carText();
+        sf::Text quickCarFound("Quicksort Result found:\n" + quickCarText, font, 14);
+        quickCarFound.setPosition(0, 370);
+        sf::Text timeQT("Time Taken for QuickSort: " + quickTimeTaken + " microseconds", font, 18);
+        timeQT.setPosition(0, 675);
+        while (secondWindow.pollEvent(secondEvent)) {
+            if (secondEvent.type == sf::Event::Closed)
+                secondWindow.close();
+        }
+        sf::Text timeFaster;
+        if(std::stoi(mergeTimeTaken) < std::stoi(quickTimeTaken)){
+            int timeDiff = std::stoi(quickTimeTaken) - std::stoi(mergeTimeTaken);
+            timeFaster = sf::Text("Mergesort faster by " + std::to_string(timeDiff) + " microseconds", font, 16);
+        }else if(std::stoi(mergeTimeTaken) > std::stoi(quickTimeTaken)){
+            int timeDiff = std::stoi(mergeTimeTaken) - std::stoi(quickTimeTaken);
+                timeFaster = sf::Text("Quicksort faster by " + std::to_string(timeDiff) + " microseconds", font, 16);
+        }else{
+                timeFaster = sf::Text("Same Exact Speed", font, 16);
+        }
+        timeFaster.setPosition(0, 770);
+        secondWindow.clear(sf::Color::Black);
+        secondWindow.draw(mergeCarFound);
+        secondWindow.draw(timeMT);
+        secondWindow.draw(quickCarFound);
+        secondWindow.draw(timeFaster);
+        secondWindow.draw(timeQT);
+        secondWindow.display();
+    }
 }
