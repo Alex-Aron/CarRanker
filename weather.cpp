@@ -26,4 +26,8 @@ std::string weather::getCode() {
     return code;
 }
 
+std::string weather::getState() {
+    return state;
+}
+
 

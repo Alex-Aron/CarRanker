@@ -8,7 +8,10 @@
 #include "cars.h"
 #include "AdList.h"
 #include "weather.h"
-void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string& cylinderCount);
+void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string& cylinderCount, std::string& optionChosen, bool& findCarClicked, std::string& make);
+void resultWindow(sf::Font font);
+void findCars(std::string& dfsCar, std::string& bfsCar, std::string& dfsTime, std::string& dfsProperties, std::string& bfsTime, std::string& bfsProperties, make);
+void readData(AdList& carAdList, AdList& weatherAdList);
 // Function to split a string based on a delim (comma in this case)
 std::vector<std::string> splitString(const std::string& line, char delim) {
     std::vector<std::string> tokens;
@@ -24,14 +27,27 @@ int main() {
     std::string userState;
     std::string makeBoxText;
     std::string cylinderCount;
-    AdList carAdList;//Might switch to matrix
+    std::string optionChosen;
+    std::string make;
+    bool findCarClicked = false;
+    sf::Font font;
+    font.loadFromFile("arial.ttf");
+    AdList carAdList;
     AdList weatherAdList;
+    sfmlHandling(userState, makeBoxText, cylinderCount, optionChosen, findCarClicked, make);
+    if(!findCarClicked)
+        return 0;
+    readData(carAdList, weatherAdList);
+    findCars(carAdList, weatherAdList, userState, optionChosen, cylinderCount, make);
+    resultWindow(font);
+    return 0;
+}
+
+void readData(AdList& carAdList, AdList& weatherAdList){
     std::ifstream carFile("cars.csv");
     if (!carFile.is_open()) {
         std::cerr << "Error opening the file." << std::endl;
-        return 1;
     }
-    sfmlHandling(userState, makeBoxText, cylinderCount);
     std::vector<cars> carData;
     std::vector<weather> weatherData;
     std::string line;
@@ -41,16 +57,15 @@ int main() {
         for(auto & str : row){
             str.erase(std::remove(str.begin(), str.end(), '\"'), str.end());
         }
-            cars car(std::stoi(row[0]), std::stoi(row[1]), std::stoi(row[2]), row[3], row[4],
-                     true, std::stoi(row[6]), row[7], std::stoi(row[8]), row[9],
-                     std::stoi(row[10]), true, row[12], row[13], row[14], std::stoi(row[15]),
-                     std::stoi(row[16]), std::stoi(row[17]));
-            carData.push_back(car);
+        cars car(std::stoi(row[0]), std::stoi(row[1]), std::stoi(row[2]), row[3], row[4],
+                 true, std::stoi(row[6]), row[7], std::stoi(row[8]), row[9],
+                 std::stoi(row[10]), true, row[12], row[13], row[14], std::stoi(row[15]),
+                 std::stoi(row[16]), std::stoi(row[17]));
+        carData.push_back(car);
     }
     std::ifstream weatherFile("weather.csv");
     if (!carFile.is_open()) {
         std::cerr << "Error opening the file." << std::endl;
-        return 1;
     }
     std::getline(weatherFile, line);
     while (std::getline(weatherFile, line)) {
@@ -58,8 +73,8 @@ int main() {
         for(auto & str : row){
             str.erase(std::remove(str.begin(), str.end(), '\"'), str.end());
         }
-            weather weatherCity(std::stof(row[0]), row[1], std::stoi(row[2]), std::stoi(row[3]), std::stoi(row[4]),row[5], row[6], row[7], row[9], std::stoi(row[10]), std::stoi(row[11]), std::stoi(row[12]), std::stoi(row[13]), std::stof(row[14]));
-            weatherData.push_back(weatherCity);
+        weather weatherCity(std::stof(row[0]), row[1], std::stoi(row[2]), std::stoi(row[3]), std::stoi(row[4]),row[5], row[6], row[7], row[9], std::stoi(row[10]), std::stoi(row[11]), std::stoi(row[12]), std::stoi(row[13]), std::stof(row[14]));
+        weatherData.push_back(weatherCity);
     }
 
     for(int i = 0; i < carData.size(); i++){
@@ -71,18 +86,16 @@ int main() {
     }
     for(int i = 0; i < weatherData.size(); i++){
         for(int j = i + 1; j < weatherData.size(); j++){
-            if(weatherData[i].getLocation() == weatherData[j].getLocation()){
+            if(weatherData[i].getState() == weatherData[j].getState()){
                 weatherAdList.insertWeatherEdge(weatherData[i], weatherData[j]);
             }
         }
     }
-
     carFile.close();
     weatherFile.close();
-    return 0;
 }
 
-void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string& cylinderCount){
+void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string& cylinderCount, std::string& optionChosen, bool& findCarClicked){
     const int windowWidth = 540;
     const int windowHeight = 930;
     // Create the SFML window
@@ -93,6 +106,7 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string&
     const int buttonY = (windowHeight * 2) / 2.5; // Position the button about 1/3 from the bottom
     bool showMakeBox = false;
     bool showCylinderBox = false;
+    bool automatic = false;
     // Create the button shape and text
     sf::RectangleShape carButton(sf::Vector2f(buttonWidth, buttonHeight));
     sf::RectangleShape underLine(sf::Vector2f(windowWidth, 1));
@@ -166,13 +180,10 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string&
     titleText.setPosition(120, 50);
     buttonText.setPosition(buttonX + (buttonWidth - buttonText.getLocalBounds().width) / 2,
                            buttonY + (buttonHeight - buttonText.getLocalBounds().height) / 2);
-    //buttonText.setFillColor(sf::Color::White);
-    //titleText.setFillColor(sf::Color::White);
     userInput.setFillColor(sf::Color::Black);
     makeInput.setFillColor(sf::Color::Black);
     cylinderInput.setFillColor(sf::Color::Black);
     option3SubText.setFillColor(sf::Color::White);
-    // Main loop
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -185,15 +196,19 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string&
                     if (option6.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         if (automaticSelected.getFillColor() == sf::Color::Black) {
                             automaticSelected.setFillColor(sf::Color::White);
+                            automatic = false;
                         } else {
                             automaticSelected.setFillColor(sf::Color::Black);
+                            automatic = true;
                         }
                     }
                     if (option1.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         selectedOption.setPosition(82, 172);
+                        optionChosen = "horsepower";
                         showMakeBox = false;
                         showCylinderBox = false;
                     } else if (option2.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                        optionChosen = "make";
                         selectedOption.setPosition(82, 252);
                         makeBox.setFillColor(sf::Color::White);
                         makeBox.setPosition(230, 282);
@@ -203,6 +218,7 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string&
                         showMakeBox = true;
                         showCylinderBox = false;
                     } else if (option3.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                        optionChosen = "numCylinders";
                         selectedOption.setPosition(82, 332);
                         cylinderBox.setFillColor(sf::Color::White);
                         cylinderBox.setPosition(265, 364);
@@ -212,16 +228,19 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string&
                         showMakeBox = false;
                         showCylinderBox = true;
                     } else if (option4.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                        optionChosen = "cityMileage";
                         selectedOption.setPosition(82, 412);
                         showMakeBox = false;
                         showCylinderBox = false;
                     } else if (option5.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                        optionChosen = "highwayMileage";
                         selectedOption.setPosition(82, 492);
                         showMakeBox = false;
                         showCylinderBox = false;
                     }
                     if (carButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
-                        std::cout << "Implement action Later" << std::endl;
+                        findCarClicked = true;
+                        window.close();
                     }
                 }
             }
@@ -321,3 +340,54 @@ void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string&
             window.display();
         }
     }
+
+    void resultWindow(sf::Font font){
+        sf::RenderWindow secondWindow(sf::VideoMode(400, 600), "SFML SubWindow");
+        //Call two searches right before showing the results on the second screen
+        std::string dfsCar;
+        std::string bfsCar;
+        std::string dfsTime;
+        std::string dfsProperties;
+        std::string bfsTime;
+        std::string bfsProperties;
+        findCars(dfsCar,  bfsCar, dfsTime,  dfsProperties, bfsTime, bfsProperties);
+        while (secondWindow.isOpen()) {
+            sf::Event secondEvent;
+            sf::Text dfs("Result found with Depth-First Search: ", font, 18);
+            sf::Text bfs("Result found with Breadth-First Search: ", font, 18);
+            sf::Text dfsTime("Time taken: ", font, 18);
+            sf::Text bfsTime("Time taken: ", font, 18);
+            sf::Text carProperties1("Car Properites: ", font, 16);
+            sf::Text carProperties2("Car Properites: ", font, 16);
+            dfs.setPosition(0, 10);
+            dfsTime.setPosition(0, 290);
+            bfs.setPosition(0, 310);
+            bfsTime.setPosition(0, 580);
+            carProperties1.setPosition(0, 60);
+            carProperties2.setPosition(0, 360);
+            dfs.setFillColor(sf::Color::White);
+            bfs.setFillColor(sf::Color::White);
+            carProperties1.setFillColor(sf::Color::White);
+            carProperties2.setFillColor(sf::Color::White);
+            dfsTime.setFillColor(sf::Color::White);
+            bfsTime.setFillColor(sf::Color::White);
+            sf::Text dfsCarInfo;
+            sf::Text bfsCarInfo;
+            while (secondWindow.pollEvent(secondEvent)) {
+                if (secondEvent.type == sf::Event::Closed)
+                    secondWindow.close();
+            }
+            secondWindow.clear(sf::Color::Black);
+            secondWindow.draw(dfs);
+            secondWindow.draw(bfs);
+            secondWindow.draw(carProperties1);
+            secondWindow.draw(carProperties2);
+            secondWindow.draw(bfsTime);
+            secondWindow.draw(dfsTime);
+            secondWindow.display();
+        }
+}
+
+void findCars(std::string& dfsCar, std::string& bfsCar, std::string& dfsTime, std::string& dfsProperties, std::string& bfsTime, std::string& bfsProperties){
+
+}

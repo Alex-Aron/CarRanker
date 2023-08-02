@@ -13,3 +13,7 @@ void AdList::insertWeatherEdge(weather from, weather to) {
         weatherGraph[to.getCode()] = {};
     }
 }
+
+void AdList::carBFS(std::string startV) {
+
+}
