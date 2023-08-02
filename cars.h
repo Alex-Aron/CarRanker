@@ -2,28 +2,32 @@
 #include <iostream>
 class cars {
 public:
-    cars(int l, int w, int h, std::string driveLine, std::string enType, bool isH, int gears, std::string trans, int cityM, std::string fType, int hM, bool autoOrManual, std::string id, std::string Make, std::string Model, int Year, int HP, int to){
-    length = l;
-    width = w;
-    height = h;
-    this->driveLine = driveLine;
-    engineType = enType;
-    isHybrid = isH;
-    numGears = gears;
-    transmission = trans;
-    cityMPG = cityM;
-    fuelType = fType;
-    highwayMPG = hM;
-    isAuto = autoOrManual;
-    ID = id;
-    make = Make;
-    model = Model;
-    year = Year;
-    horsepower = HP;
-    torque = to;
+    cars(int l, int w, int h, std::string driveLine, std::string enType, bool isH, int gears, std::string trans, int cityM, std::string fType, int hM, bool autoOrManual, std::string id, std::string Make, std::string Model, int Year, int HP, int to) {
+        length = l;
+        width = w;
+        height = h;
+        this->driveLine = driveLine;
+        engineType = enType;
+        isHybrid = isH;
+        numGears = gears;
+        transmission = trans;
+        cityMPG = cityM;
+        fuelType = fType;
+        highwayMPG = hM;
+        isAuto = autoOrManual;
+        ID = id;
+        make = Make;
+        model = Model;
+        year = Year;
+        horsepower = HP;
+        torque = to;
     };
     std::string getID();
     std::string getMake();
+    int getHorsepower();
+    int getCityMPG();
+    int getHighwayMPG();
+    void printCar();
 private:
     int length;
     int width;
@@ -44,5 +48,4 @@ private:
     int horsepower;
     int torque;
 
-};
-
+}; 
