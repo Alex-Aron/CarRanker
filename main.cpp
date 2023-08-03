@@ -11,7 +11,7 @@
 #include "OptionsButton.h"
 #include "sorts.h"
 //Function definitions
-void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string& cylinderCount, bool& horsepower, bool& gasCity, bool& gasHighway, bool& findCarClicked);
+void sfmlHandling(std::string& userState, std::string& makeBoxText,  bool& horsepower, bool& gasCity, bool& gasHighway, bool& findCarClicked);
 void resultWindow(std::vector<cars>& mergeResults, std::string mergeTimeTaken,std::vector<cars>& quickResults, std::string quickTimeTaken);
 std::vector<std::string> splitString(const std::string& line, char delim) {
     std::vector<std::string> tokens;
@@ -31,7 +31,6 @@ int main() {
     bool findCarClicked = false;
     std::string userState = "";
     std::string makeBoxText = "";
-    std::string cylinderCount = "";
     std::ifstream carFile("cars.csv");
     if (!carFile.is_open()) {
         std::cerr << "Error opening the file." << std::endl;
@@ -68,7 +67,7 @@ int main() {
         weatherData.push_back(weatherCity);
     }
 
-    sfmlHandling(userState, makeBoxText, cylinderCount, horsepower, gasCity, gasHighway, findCarClicked);
+    sfmlHandling(userState, makeBoxText, horsepower, gasCity, gasHighway, findCarClicked);
     std::vector<cars> mergeResults;
     std::vector<cars> quickResults;
     auto startTimeMerge = std::chrono::high_resolution_clock::now();
@@ -120,10 +119,10 @@ int main() {
     return 0;
 }
 
-void sfmlHandling(std::string& userState, std::string& makeBoxText, std::string& cylinderCount, bool& horsepower, bool& gasCity, bool&
+void sfmlHandling(std::string& userState, std::string& makeBoxText, bool& horsepower, bool& gasCity, bool&
 gasHighway, bool& findCarClicked) {
     const int windowWidth = 540;
-    const int windowHeight = 930;
+    const int windowHeight = 850;
     // Create the SFML window
     sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "Car Selection Helper");
     const int buttonWidth = 250;
@@ -131,23 +130,18 @@ gasHighway, bool& findCarClicked) {
     const int buttonX = (windowWidth - buttonWidth) / 2; // Center the button horizontally
     const int buttonY = (windowHeight * 2) / 2.5; // Position the button about 1/3 from the bottom
     bool showMakeBox = false;
-    bool showCylinderBox = false;
-    // Create the button shape and text
     sf::RectangleShape carButton(sf::Vector2f(buttonWidth, buttonHeight));
     sf::RectangleShape underLine(sf::Vector2f(windowWidth, 1));
     sf::RectangleShape stateInput(sf::Vector2f(300, 30));
     sf::RectangleShape makeBox(sf::Vector2f(150, 20));
-    sf::RectangleShape cylinderBox(sf::Vector2f(200, 20));
     makeBox.setFillColor(sf::Color::Black);
-    cylinderBox.setFillColor(sf::Color::Black);
     OptionsButton option1(80, 170);
     OptionsButton option2(80, 250);
     OptionsButton option3(80, 330);
     OptionsButton option4(80, 410);
     OptionsButton option5(80, 490);
-    OptionsButton option6(80, 570);
-    stateInput.setPosition(120, 670);
-    carButton.setPosition(buttonX, buttonY);
+    stateInput.setPosition(120, 600);
+    carButton.setPosition(buttonX, buttonY-40);
     underLine.setPosition(0, 90);
     carButton.setFillColor(sf::Color::Blue);
     underLine.setFillColor(sf::Color::White);
@@ -160,11 +154,9 @@ gasHighway, bool& findCarClicked) {
     sf::Text option1Text("Horsepower (HP)", font, 28);
     sf::Text option2Text("Car Make (Example: Cheverolet)", font, 25);
     sf::Text option2SubText("Enter Make: ", font, 18);
-    sf::Text option3Text("Engine Type (Example: 6 Cylinder)", font, 24);
-    sf::Text option3SubText("Number of Cylinders:", font, 14);
-    sf::Text option4Text("Gas Mileage(City Priority)", font, 28);
-    sf::Text option5Text("Gas Mileage(Highway Priority)", font, 28);
-    sf::Text option6Text("Automatic Engine(Blank for Manual)", font, 20);
+    sf::Text option3Text("Gas Mileage(City Priority)", font, 28);
+    sf::Text option4Text("Gas Mileage(Highway Priority)", font, 28);
+    sf::Text option5Text("Automatic Engine(Blank for Manual)", font, 20);
     sf::Text locationPrompt("What State Do You Live In?", font, 28);
     sf::Text userInput("", font, 28);
     sf::Text makeInput("", font, 18);
@@ -174,19 +166,15 @@ gasHighway, bool& findCarClicked) {
     option3Text.setPosition(130, 330);
     option4Text.setPosition(130, 410);
     option5Text.setPosition(130, 490);
-    option6Text.setPosition(130, 570);
-    userInput.setPosition(125, 665);
+    userInput.setPosition(125, 600);
     questionText.setPosition(80, 110);
-    locationPrompt.setPosition(100, 630);
+    locationPrompt.setPosition(100, 560);
     titleText.setPosition(120, 50);
     buttonText.setPosition(buttonX + (buttonWidth - buttonText.getLocalBounds().width) / 2,
-        buttonY + (buttonHeight - buttonText.getLocalBounds().height) / 2);
-    //buttonText.setFillColor(sf::Color::White);
-    //titleText.setFillColor(sf::Color::White);
+        buttonY + (buttonHeight - (buttonText.getLocalBounds().height) / 2)-80);
     userInput.setFillColor(sf::Color::Black);
     makeInput.setFillColor(sf::Color::Black);
     cylinderInput.setFillColor(sf::Color::Black);
-    option3SubText.setFillColor(sf::Color::White);
     // Main loop
     while (window.isOpen()) {
         sf::Event event;
@@ -217,28 +205,14 @@ gasHighway, bool& findCarClicked) {
                     }
                     if (option3.myOption().getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         option3.select();
-                        if (option3.isSelected()) {
-                            cylinderBox.setFillColor(sf::Color::White);
-                            cylinderBox.setPosition(265, 364);
-                            option3SubText.setPosition(130, 362);
-                            cylinderInput.setPosition(270, 362);
-                            cylinderInput.setFillColor(sf::Color::Black);
-                            showCylinderBox = true;
-                        }
-                        else {
-                            showCylinderBox = false;
-                        }
+                        gasCity = !gasCity;
                     }
                     if (option4.myOption().getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         option4.select();
-                        gasCity = !gasCity;
+                        gasHighway = !gasHighway;
                     }
                     if (option5.myOption().getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         option5.select();
-                        gasHighway = !gasHighway;
-                    }
-                    if (option6.myOption().getGlobalBounds().contains(mousePos.x, mousePos.y)) {
-                        option6.select();
                     }
                     if (carButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         findCarClicked = true;
@@ -288,27 +262,6 @@ gasHighway, bool& findCarClicked) {
                         }
                     }
                 }
-                else if (cylinderBox.getGlobalBounds().contains(mousePos.x, mousePos.y) && showCylinderBox) {
-                    if (event.type == sf::Event::TextEntered && showCylinderBox) {
-                        if (event.text.unicode <
-                            128) {//Ensure it is only the unicode alphabet characters that would be in a state
-                            if (event.text.unicode == 13) { // Handle Enter key press (optional)
-                                std::cout << cylinderCount << std::endl;
-                                //Use if want to clear input userState.clear();
-                            }
-                            else if (event.text.unicode == 8 &&
-                                !cylinderCount.empty()) {//Backspace is unicode 8, so if that is pressed get rid of the last character.
-                                cylinderCount.pop_back();
-                            }
-                            else if (userState.size() <
-                                20) {//Longest state name is Massachusetts, which is 13 characters, so it shouldn't even be longer than that
-                                cylinderCount += static_cast<char>(event.text.unicode);
-                            }
-                            //Make sure the textBox shows the charcters being typed in
-                            cylinderInput.setString(cylinderCount);
-                        }
-                    }
-                }
             }
         }
         // Clear the window
@@ -327,22 +280,15 @@ gasHighway, bool& findCarClicked) {
         option3.drawButton(window);
         option4.drawButton(window);
         option5.drawButton(window);
-        option6.drawButton(window);
         window.draw(option1Text);
         window.draw(option2Text);
         window.draw(option3Text);
         window.draw(option4Text);
         window.draw(option5Text);
-        window.draw(option6Text);
         if (showMakeBox) {
             window.draw(makeBox);
             window.draw(option2SubText);
             window.draw(makeInput);
-        }
-        if (showCylinderBox) {
-            window.draw(cylinderBox);
-            window.draw(option3SubText);
-            window.draw(cylinderInput);
         }
         window.display();
     }
