@@ -1,7 +1,7 @@
 #include "sorts.h"
-void sortMake(std::vector<cars>& carData, std::vector<cars>& ans, std::string make) {
+void sortMake(std::vector<cars>& carData, std::vector<cars>& ans, std::string make, std::string isAuto) {
     for (int i = 0; i < carData.size(); i++) {
-        if (carData[i].getMake() == make) {
+        if (carData[i].getMake() == make && carData[i].getAutoOrManual() == isAuto) {
             ans.push_back(carData[i]);//Data in csv already sorted by make
         }
     }
@@ -54,10 +54,11 @@ void mergeSortHP(std::vector<cars>& carData, int start, int end) {
     mergeHP(carData, start, mid, end);
 }
 
-void mergeSortHorsepower(std::vector<cars>& carData, std::vector<cars>& ans) {
+void mergeSortHorsepower(std::vector<cars>& carData, std::vector<cars>& ans, std::string isAuto) {
     mergeSortHP(carData, 0, carData.size() - 1);
     for (int i = carData.size() - 1; i > carData.size() - 1001; i--) {
-        ans.push_back(carData[i]);
+        if(carData[i].getAutoOrManual() == isAuto)
+            ans.push_back(carData[i]);
     }
 }
 
@@ -93,10 +94,11 @@ void quickSortHP(std::vector<cars>& carData, int low, int high) {
     return;
 }
 
-void quickSortHorsepower(std::vector<cars>& carData, std::vector<cars>& ans) {
+void quickSortHorsepower(std::vector<cars>& carData, std::vector<cars>& ans, std::string isAuto) {
     quickSortHP(carData, 0, carData.size() - 1);
     for (int i = carData.size() - 1; i > carData.size() - 1001; i--) {
-        ans.push_back(carData[i]);
+        if(carData[i].getAutoOrManual() == isAuto)
+            ans.push_back(carData[i]);
     }
 }
 
@@ -132,10 +134,11 @@ void quickSortC(std::vector<cars>& carData, int low, int high) {
     return;
 }
 
-void quickSortGasCity(std::vector<cars>& carData, std::vector<cars>& ans) {
+void quickSortGasCity(std::vector<cars>& carData, std::vector<cars>& ans, std::string isAuto) {
     quickSortC(carData, 0, carData.size()-1);
     for (int i = carData.size() - 1; i > carData.size() - 1001; i--) {
-        ans.push_back(carData[i]);
+        if(carData[i].getAutoOrManual() == isAuto)
+            ans.push_back(carData[i]);
     }
     return;
 }
@@ -188,10 +191,11 @@ void mergeSortC(std::vector<cars>& carData, int start, int end) {
     mergeC(carData, start, mid, end);
 }
 
-void mergeSortGasCity(std::vector<cars>& carData, std::vector<cars>& ans) {
+void mergeSortGasCity(std::vector<cars>& carData, std::vector<cars>& ans, std::string isAuto) {
     mergeSortC(carData, 0, carData.size()-1);
     for (int i = carData.size() - 1; i > carData.size() - 1001; i--) {
-        ans.push_back(carData[i]);
+        if(carData[i].getAutoOrManual() == isAuto)
+            ans.push_back(carData[i]);
     }
     return;
 }
@@ -227,10 +231,11 @@ void quickSortH(std::vector<cars>& carData, int low, int high) {
     return;
 }
 
-void quickSortGasHighway(std::vector<cars>& carData, std::vector<cars>& ans) {
+void quickSortGasHighway(std::vector<cars>& carData, std::vector<cars>& ans, std::string isAuto) {
     quickSortH(carData, 0, carData.size() - 1);
     for (int i = carData.size() - 1; i > carData.size() - 1001; i--) {
-        ans.push_back(carData[i]);
+        if(carData[i].getAutoOrManual() == isAuto)
+            ans.push_back(carData[i]);
     }
     return;
 }
@@ -282,10 +287,11 @@ void mergeSortHW(std::vector<cars>& carData, int start, int end) {
     mergeHW(carData, start, mid, end);
 }
 
-void mergeSortGasHighway(std::vector<cars>& carData, std::vector<cars>& ans) {
+void mergeSortGasHighway(std::vector<cars>& carData, std::vector<cars>& ans, std::string isAuto) {
     mergeSortHW(carData, 0, carData.size()-1);
     for (int i = carData.size() - 1; i > carData.size() - 1001; i--) {
-        ans.push_back(carData[i]);
+        if(carData[i].getAutoOrManual() == isAuto)
+            ans.push_back(carData[i]);
     }
     return;
 }

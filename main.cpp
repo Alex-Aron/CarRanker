@@ -11,7 +11,7 @@
 #include "OptionsButton.h"
 #include "sorts.h"
 //Function definitions
-void sfmlHandling(std::string& userState, std::string& makeBoxText,  bool& horsepower, bool& gasCity, bool& gasHighway, bool& findCarClicked);
+void sfmlHandling(std::string& userState, std::string& makeBoxText,  bool& horsepower, bool& gasCity, bool& gasHighway, bool& findCarClicked, std::string& isAutomatic);
 void resultWindow(std::vector<cars>& mergeResults, std::string mergeTimeTaken,std::vector<cars>& quickResults, std::string quickTimeTaken);
 std::vector<std::string> splitString(const std::string& line, char delim) {
     std::vector<std::string> tokens;
@@ -29,6 +29,7 @@ int main() {
     bool gasCity = false;
     bool gasHighway = false;
     bool findCarClicked = false;
+    std::string isAutomatic = "Manual transmission";
     std::string userState = "";
     std::string makeBoxText = "";
     std::ifstream carFile("cars.csv");
@@ -48,7 +49,7 @@ int main() {
         }
         cars car(std::stoi(row[0]), std::stoi(row[1]), std::stoi(row[2]), row[3], row[4],
             true, std::stoi(row[6]), row[7], std::stoi(row[8]), row[9],
-            std::stoi(row[10]), true, row[12], row[13], row[14], std::stoi(row[15]),
+            std::stoi(row[10]), row[11], row[12], row[13], row[14], std::stoi(row[15]),
             std::stoi(row[16]), std::stoi(row[17]));
         carData.push_back(car);
     }
@@ -67,40 +68,43 @@ int main() {
         weatherData.push_back(weatherCity);
     }
 
-    sfmlHandling(userState, makeBoxText, horsepower, gasCity, gasHighway, findCarClicked);
+    sfmlHandling(userState, makeBoxText, horsepower, gasCity, gasHighway, findCarClicked, isAutomatic);
     std::vector<cars> mergeResults;
     std::vector<cars> quickResults;
+    auto unsortedTemp = carData;
     auto startTimeMerge = std::chrono::high_resolution_clock::now();
-    if (makeBoxText != "") {
-        sortMake(carData, mergeResults, makeBoxText);
+    if(makeBoxText != ""){
+        sortMake(carData, mergeResults, makeBoxText, isAutomatic);
     }
     if (horsepower) {
-        mergeSortHorsepower(carData, mergeResults);
+        mergeSortHorsepower(carData, mergeResults, isAutomatic);
     }
-
-    if (gasCity) {
-        mergeSortGasCity(carData, mergeResults);
+    else if (gasCity) {
+        mergeSortGasCity(carData, mergeResults, isAutomatic);
     }
-
-    if (gasHighway) {
-        mergeSortGasHighway(carData, mergeResults);
+    else if (gasHighway) {
+        mergeSortGasHighway(carData, mergeResults, isAutomatic);
+    }else{
+        mergeSortGasCity(carData, mergeResults, isAutomatic);
     }
     auto endTimeMerge = std::chrono::high_resolution_clock::now();
     auto durationMerge = std::chrono::duration_cast<std::chrono::microseconds>(endTimeMerge - startTimeMerge).count();
     std::string mergeTimeTaken = std::to_string(durationMerge);
+    carData = unsortedTemp;
     auto startTimeQuick = std::chrono::high_resolution_clock::now();
     if (makeBoxText != "") {
-        sortMake(carData, quickResults, makeBoxText);
+        sortMake(carData, quickResults, makeBoxText, isAutomatic);
+   }
+    else if (horsepower) {
+        quickSortHorsepower(carData, quickResults, isAutomatic);
     }
-    if (horsepower) {
-        quickSortHorsepower(carData, quickResults);
+    else if (gasCity) {
+        quickSortGasCity(carData, quickResults, isAutomatic);
     }
-
-    if (gasCity) {
-        quickSortGasCity(carData, quickResults);
-    }
-    if (gasHighway) {
-        quickSortGasHighway(carData, quickResults);
+    else if (gasHighway) {
+        quickSortGasHighway(carData, quickResults, isAutomatic);
+    }else{
+        quickSortGasCity(carData, quickResults, isAutomatic);
     }
     auto endTimeQuick = std::chrono::high_resolution_clock::now();
     auto durationQuick = std::chrono::duration_cast<std::chrono::microseconds>(endTimeQuick - startTimeQuick).count();
@@ -120,7 +124,7 @@ int main() {
 }
 
 void sfmlHandling(std::string& userState, std::string& makeBoxText, bool& horsepower, bool& gasCity, bool&
-gasHighway, bool& findCarClicked) {
+gasHighway, bool& findCarClicked, std::string& isAutomatic) {
     const int windowWidth = 540;
     const int windowHeight = 850;
     // Create the SFML window
@@ -188,6 +192,15 @@ gasHighway, bool& findCarClicked) {
                     if (option1.myOption().getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         option1.select();
                         horsepower = !horsepower;
+                        if(gasCity)
+                            option3.select();
+                        gasCity = false;
+                        if(gasHighway)
+                            option4.select();
+                        gasHighway = false;
+                        if(showMakeBox)
+                            option2.select();
+                        showMakeBox = false;
                     }
                     if (option2.myOption().getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         option2.select();
@@ -200,19 +213,51 @@ gasHighway, bool& findCarClicked) {
                             showMakeBox = true;
                         }
                         else {
+                            makeBoxText.clear();
                             showMakeBox = false;
                         }
+                        if(gasCity)
+                            option3.select();
+                        gasCity = false;
+                        if(gasHighway)
+                            option4.select();
+                        gasHighway = false;
+                        if(horsepower)
+                            option1.select();
+                        horsepower = false;
                     }
                     if (option3.myOption().getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         option3.select();
                         gasCity = !gasCity;
+                        if(gasHighway)
+                            option4.select();
+                        gasHighway = false;
+                        if(horsepower)
+                            option1.select();
+                        horsepower = false;
+                        if(showMakeBox)
+                            option2.select();
+                        showMakeBox = false;
                     }
                     if (option4.myOption().getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         option4.select();
                         gasHighway = !gasHighway;
+                        if(gasCity)
+                            option3.select();
+                        gasCity = false;
+                        if(horsepower)
+                            option1.select();
+                        horsepower = false;
+                        if(showMakeBox)
+                            option2.select();
+                        showMakeBox = false;
                     }
                     if (option5.myOption().getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         option5.select();
+                        if(isAutomatic == "Manual transmission" || isAutomatic == "")
+                            isAutomatic = "Automatic transmission";
+                        else
+                            isAutomatic = "Manual transmission";
                     }
                     if (carButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                         findCarClicked = true;
@@ -312,7 +357,7 @@ void resultWindow(std::vector<cars>& mergeResults, std::string mergeTimeTaken,st
         std::string quickCarText = quickResults[0].carText();
         sf::Text quickCarFound("Quicksort Result found:\n" + quickCarText, font, 14);
         quickCarFound.setPosition(0, 370);
-        sf::Text timeQT("Time Taken for QuickSort: " + quickTimeTaken + " microseconds", font, 18);
+        sf::Text timeQT("Time Taken for Quicksort: " + quickTimeTaken + " microseconds", font, 18);
         timeQT.setPosition(0, 675);
         while (secondWindow.pollEvent(secondEvent)) {
             if (secondEvent.type == sf::Event::Closed)

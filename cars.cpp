@@ -37,11 +37,15 @@ std::string cars::carText() {
     std::string automatic = "Manual";
     if(isHybrid)
         hybrid = "True";
-    if(isAuto)
+    if(isAuto == "Automatic transmission")
         automatic = "Automatic";
     return "Length: " + std::to_string(length) + "\nWidth: " + std::to_string(width)+ "\nHeight: " + std::to_string(height) + "\nDriveline: " + driveLine + "\nEngine type: " +
                       engineType + "\nIs hybrid: " + hybrid + "\nNumber of gears: " + std::to_string(numGears) + "\nTransmission: " + transmission + "\nCity MPG: "
                       + std::to_string(cityMPG) + "\nFuel type: " + fuelType + "\nHighway MPG: " + std::to_string(highwayMPG) + "\nTransmission type: " + automatic + "\nID: " +
                       ID + "\nMake: " + make + "\nModel: " + model + "\nYear: " + std::to_string(year) + "\nHorsepower: " + std::to_string(horsepower) + "\nTorque: " +
                       std::to_string(torque);
+}
+
+std::string cars::getAutoOrManual() {
+    return isAuto;
 }

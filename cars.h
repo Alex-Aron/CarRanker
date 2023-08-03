@@ -2,7 +2,7 @@
 #include <iostream>
 class cars {
 public:
-    cars(int l, int w, int h, std::string driveLine, std::string enType, bool isH, int gears, std::string trans, int cityM, std::string fType, int hM, bool autoOrManual, std::string id, std::string Make, std::string Model, int Year, int HP, int to) {
+    cars(int l, int w, int h, std::string driveLine, std::string enType, bool isH, int gears, std::string trans, int cityM, std::string fType, int hM, std::string autoOrManual, std::string id, std::string Make, std::string Model, int Year, int HP, int to) {
         length = l;
         width = w;
         height = h;
@@ -25,6 +25,7 @@ public:
     std::string getID();
     std::string getMake();
     std::string getModel();
+    std::string getAutoOrManual();
     int getHorsepower();
     int getCityMPG();
     int getHighwayMPG();
@@ -42,7 +43,7 @@ private:
     int cityMPG;
     std::string fuelType;
     int highwayMPG;
-    bool isAuto;
+    std::string isAuto;
     std::string ID;
     std::string make;
     std::string model;
