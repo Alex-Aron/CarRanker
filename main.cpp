@@ -37,6 +37,8 @@ int main() {
         std::cerr << "Error opening the file." << std::endl;
         return 1;
     }
+    std::vector<std::string> validMakes;
+    std::vector<std::string> validState;
     //sfmlHandling(userState, makeBoxText, cylinderCount);
     std::vector<cars> carData;
     std::vector<weather> weatherData;
@@ -52,6 +54,7 @@ int main() {
             std::stoi(row[10]), row[11], row[12], row[13], row[14], std::stoi(row[15]),
             std::stoi(row[16]), std::stoi(row[17]));
         carData.push_back(car);
+        validMakes.push_back(row[13]);
     }
     std::ifstream weatherFile("weather.csv");
     if (!carFile.is_open()) {
@@ -66,6 +69,7 @@ int main() {
         }
         weather weatherCity(std::stof(row[0]), row[1], std::stoi(row[2]), std::stoi(row[3]), std::stoi(row[4]), row[5], row[6], row[7], row[9], std::stoi(row[10]), std::stoi(row[11]), std::stoi(row[12]), std::stoi(row[13]), std::stof(row[14]));
         weatherData.push_back(weatherCity);
+        validState.push_back(row[9]);
     }
 
     sfmlHandling(userState, makeBoxText, horsepower, gasCity, gasHighway, findCarClicked, isAutomatic);
@@ -74,28 +78,28 @@ int main() {
     auto unsortedTemp = carData;
     auto startTimeMerge = std::chrono::high_resolution_clock::now();
     if(!makeBoxText.empty()){
-        sortMake(carData, mergeResults, makeBoxText, isAutomatic);
+        sortMake(carData, mergeResults, makeBoxText, validMakes, isAutomatic);
         if(!userState.empty())
-            sortCityWeather(weatherData, userState, mergeResults);
+            sortCityWeather(weatherData, userState, mergeResults, validState);
     }
-    if (horsepower) {
+    else if (horsepower) {
         mergeSortHorsepower(carData, mergeResults, isAutomatic);
         if(!userState.empty())
-            sortCityWeather(weatherData, userState, mergeResults);
+            sortCityWeather(weatherData, userState, mergeResults, validState);
     }
     else if (gasCity){
         mergeSortGasCity(carData, mergeResults, isAutomatic);
         if(!userState.empty())
-            sortCityWeather(weatherData, userState, mergeResults);
+            sortCityWeather(weatherData, userState, mergeResults, validState);
     }
     else if (gasHighway) {
         mergeSortGasHighway(carData, mergeResults, isAutomatic);
         if(!userState.empty())
-            sortCityWeather(weatherData, userState, mergeResults);
+            sortCityWeather(weatherData, userState, mergeResults, validState);
     }else{
         mergeSortGasCity(carData, mergeResults, isAutomatic);
         if(!userState.empty())
-            sortCityWeather(weatherData, userState, mergeResults);
+            sortCityWeather(weatherData, userState, mergeResults, validState);
     }
     auto endTimeMerge = std::chrono::high_resolution_clock::now();
     auto durationMerge = std::chrono::duration_cast<std::chrono::microseconds>(endTimeMerge - startTimeMerge).count();
@@ -103,28 +107,28 @@ int main() {
     carData = unsortedTemp;
     auto startTimeQuick = std::chrono::high_resolution_clock::now();
     if (!makeBoxText.empty()) {
-        sortMake(carData, quickResults, makeBoxText, isAutomatic);
+        sortMake(carData, quickResults, makeBoxText, validMakes, isAutomatic);
         if(!userState.empty())
-            sortCityWeather(weatherData, userState, quickResults);
+            sortCityWeather(weatherData, userState, quickResults, validState);
    }
     else if (horsepower) {
         quickSortHorsepower(carData, quickResults, isAutomatic);
         if(!userState.empty())
-            sortCityWeather(weatherData, userState, quickResults);
+            sortCityWeather(weatherData, userState, quickResults, validState);
     }
     else if (gasCity) {
         quickSortGasCity(carData, quickResults, isAutomatic);
         if(!userState.empty())
-            sortCityWeather(weatherData, userState, quickResults);
+            sortCityWeather(weatherData, userState, quickResults, validState);
     }
     else if (gasHighway) {
         quickSortGasHighway(carData, quickResults, isAutomatic);
         if(!userState.empty())
-            sortCityWeather(weatherData, userState, quickResults);
+            sortCityWeather(weatherData, userState, quickResults, validState);
     }else{
         quickSortGasCity(carData, quickResults, isAutomatic);
         if(!userState.empty())
-            sortCityWeather(weatherData, userState, quickResults);
+            sortCityWeather(weatherData, userState, quickResults, validState);
     }
     auto endTimeQuick = std::chrono::high_resolution_clock::now();
     auto durationQuick = std::chrono::duration_cast<std::chrono::microseconds>(endTimeQuick - startTimeQuick).count();

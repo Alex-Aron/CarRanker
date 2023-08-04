@@ -1,8 +1,19 @@
 #include "sorts.h"
-void sortMake(std::vector<cars>& carData, std::vector<cars>& ans, std::string make, std::string isAuto) {
-    for (int i = 0; i < carData.size(); i++) {
-        if (carData[i].getMake() == make && carData[i].getAutoOrManual() == isAuto) {
-            ans.push_back(carData[i]);//Data in csv already sorted by make
+void sortMake(std::vector<cars>& carData, std::vector<cars>& ans, std::string make, std::vector<std::string>& validMakes,std::string isAuto) {
+    bool validMakeFound = false;
+    for (auto makes: validMakes) {
+        if (makes == make)
+            validMakeFound = true;
+    }
+    if (validMakeFound) {
+        for (int i = 0; i < carData.size(); i++) {
+            if (carData[i].getMake() == make && carData[i].getAutoOrManual() == isAuto) {
+                ans.push_back(carData[i]);//Data in csv already sorted by make
+            }
+        }
+    }else{
+        for (int i = 0; i < carData.size(); i++) {
+            ans.push_back(carData[i]);//Still have to put something in answer if there is no proper make, data will be unsorted
         }
     }
 }
@@ -296,7 +307,16 @@ void mergeSortGasHighway(std::vector<cars>& carData, std::vector<cars>& ans, std
     return;
 }
 
-void sortCityWeather(std::vector<weather>& weatherData, std::string location,std::vector<cars>& carData){
+void sortCityWeather(std::vector<weather>& weatherData, std::string location,std::vector<cars>& carData, std::vector<std::string>& validStates){
+    bool valStateEntered = false;
+    for(auto state: validStates){
+        if(state == location){
+            valStateEntered = true;
+            break;
+        }
+    }
+    if(!valStateEntered)
+        return;
     int freezeCount = 0; //# of times the min temp is recorded as below freezing
     bool allowRWD = true; //determines if rear-wheel drive will appear in results
     for(auto element: weatherData){
@@ -312,17 +332,16 @@ void sortCityWeather(std::vector<weather>& weatherData, std::string location,std
     std::vector<cars> tempRWD;
     if(!allowRWD){
         for(auto car : carData){
-            if(car.getDriveLine() != "Rear-wheel drive"){
+            if(car.getDriveLine() != "Rear-wheel drive" && car.getDriveLine() != "Front-wheel drive"){
                 temp.push_back(car); //filter out rwd
             }
         }
         for(auto car : carData){
-            if(car.getDriveLine() == "Rear-wheel drive"){
+            if(car.getDriveLine() == "Rear-wheel drive" && car.getDriveLine() == "Front-wheel drive"){
                 temp.push_back(car); //filter out rwd
             }
         }
         carData = temp;
     }
-
 }
 

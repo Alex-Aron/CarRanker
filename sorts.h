@@ -2,7 +2,7 @@
 #include <vector>
 #include "cars.h"
 #include "weather.h"
-void sortMake(std::vector<cars>& carData, std::vector<cars>& ans, std::string make, std::string isAuto);
+void sortMake(std::vector<cars>& carData, std::vector<cars>& ans, std::string make,std::vector<std::string>& validMakes, std::string isAuto);
 void mergeHP(std::vector<cars>& carData, int start, int mid, int end);
 void mergeSortHP(std::vector<cars>& carData, int start, int end);
 void mergeSortHorsepower(std::vector<cars>& carData, std::vector<cars>& ans, std::string isAuto);
@@ -21,4 +21,4 @@ void quickSortGasHighway(std::vector<cars>& carData, std::vector<cars>& ans, std
 void mergeHW(std::vector<cars>& carData, int start, int mid, int end);
 void mergeSortHW(std::vector<cars>& carData, int start, int end);
 void mergeSortGasHighway(std::vector<cars>& carData, std::vector<cars>& ans, std::string isAuto);
-void sortCityWeather(std::vector<weather>& weatherData, std::string location,std::vector<cars>& carData);
+void sortCityWeather(std::vector<weather>& weatherData, std::string location,std::vector<cars>& carData, std::vector<std::string>& validStates);
