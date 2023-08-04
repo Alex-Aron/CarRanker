@@ -294,7 +294,7 @@ gasHighway, bool& findCarClicked, std::string& isAutomatic) {
                 if (stateInput.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                     if (event.text.unicode <
                         128) {//Ensure it is only the unicode alphabet characters that would be in a state
-                        if (event.text.unicode == 13) { // Handle Enter key press (optional)
+                        if (event.text.unicode == 13) {
                             std::cout << "User State: " << userState << std::endl;
                             //Use if want to clear input userState.clear();
                         }
@@ -314,7 +314,7 @@ gasHighway, bool& findCarClicked, std::string& isAutomatic) {
                     if (event.type == sf::Event::TextEntered && showMakeBox) {
                         if (event.text.unicode <
                             128) {//Ensure it is only the unicode alphabet characters that would be in a state
-                            if (event.text.unicode == 13) { // Handle Enter key press (optional)
+                            if (event.text.unicode == 13) { 
                                 std::cout << makeBoxText << std::endl;
                                 //Use if want to clear input userState.clear();
                             }
