@@ -180,7 +180,7 @@ gasHighway, bool& findCarClicked, std::string& isAutomatic) {
     sf::Text titleText("Car Selection Helper", font, 34);
     sf::Text questionText("What Do You Want to Prioritize: ", font, 28);
     sf::Text option1Text("Horsepower (HP)", font, 28);
-    sf::Text option2Text("Car Make (Example: Cheverolet)", font, 25);
+    sf::Text option2Text("Car Make (Example: Chevrolet)", font, 25);
     sf::Text option2SubText("Enter Make: ", font, 18);
     sf::Text option3Text("Gas Mileage(City Priority)", font, 28);
     sf::Text option4Text("Gas Mileage(Highway Priority)", font, 28);
@@ -314,7 +314,7 @@ gasHighway, bool& findCarClicked, std::string& isAutomatic) {
                     if (event.type == sf::Event::TextEntered && showMakeBox) {
                         if (event.text.unicode <
                             128) {//Ensure it is only the unicode alphabet characters that would be in a state
-                            if (event.text.unicode == 13) { 
+                            if (event.text.unicode == 13) {
                                 std::cout << makeBoxText << std::endl;
                                 //Use if want to clear input userState.clear();
                             }
