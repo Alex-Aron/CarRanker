@@ -296,3 +296,33 @@ void mergeSortGasHighway(std::vector<cars>& carData, std::vector<cars>& ans, std
     return;
 }
 
+void sortCityWeather(std::vector<weather>& weatherData, std::string location,std::vector<cars>& carData){
+    int freezeCount = 0; //# of times the min temp is recorded as below freezing
+    bool allowRWD = true; //determines if rear-wheel drive will appear in results
+    for(auto element: weatherData){
+        if(element.getState() == location && element.getMinTemp() < 32){
+            freezeCount++;
+        }
+        if(freezeCount >= 1){//ends loop early if threshold has been met
+            allowRWD = false;//don't allow RWD to appear in results if it is below freezing for 1/4 of the year or more
+            break;
+        }
+    }
+    std::vector<cars> temp;
+    std::vector<cars> tempRWD;
+    if(!allowRWD){
+        for(auto car : carData){
+            if(car.getDriveLine() != "Rear-wheel drive"){
+                temp.push_back(car); //filter out rwd
+            }
+        }
+        for(auto car : carData){
+            if(car.getDriveLine() == "Rear-wheel drive"){
+                temp.push_back(car); //filter out rwd
+            }
+        }
+        carData = temp;
+    }
+
+}
+

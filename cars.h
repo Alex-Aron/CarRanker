@@ -26,6 +26,7 @@ public:
     std::string getMake();
     std::string getModel();
     std::string getAutoOrManual();
+    std::string getDriveLine();
     int getHorsepower();
     int getCityMPG();
     int getHighwayMPG();

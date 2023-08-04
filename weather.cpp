@@ -30,4 +30,8 @@ std::string weather::getState() {
     return state;
 }
 
+int weather::getMinTemp() {
+    return minTemp;
+}
+
 

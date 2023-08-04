@@ -49,3 +49,7 @@ std::string cars::carText() {
 std::string cars::getAutoOrManual() {
     return isAuto;
 }
+
+std::string cars::getDriveLine() {
+    return driveLine;
+}

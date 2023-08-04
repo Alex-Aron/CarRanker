@@ -6,6 +6,7 @@ public:
     std::string getLocation();
     std::string getCode();
     std::string getState();
+    int getMinTemp();
 private:
     float precipitation;
     std::string fullDate;

@@ -21,3 +21,4 @@ void quickSortGasHighway(std::vector<cars>& carData, std::vector<cars>& ans, std
 void mergeHW(std::vector<cars>& carData, int start, int mid, int end);
 void mergeSortHW(std::vector<cars>& carData, int start, int end);
 void mergeSortGasHighway(std::vector<cars>& carData, std::vector<cars>& ans, std::string isAuto);
+void sortCityWeather(std::vector<weather>& weatherData, std::string location,std::vector<cars>& carData);
